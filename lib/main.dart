@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:provider_demo/CountProvider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:provider_demo/mydata.dart';
+
+final _mydataProvider = StateNotifierProvider<MyDataStateNotifier, MyData>(
+    (ref) => MyDataStateNotifier());
 
 void main() {
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -11,51 +14,55 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (context) => CountProvider(),
-        )
-      ],
-      child: MaterialApp(
-        title: 'Flutter Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-        ),
-        home: MyHomePage(),
+    return MaterialApp(
+      title: 'Flutter Demo',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
       ),
+      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    final CountProvider countProvider =
-        Provider.of<CountProvider>(context, listen: true);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter Demo Home Page'),
+        title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              countProvider.counter.toString(),
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
+      body: const MyContents(),
+    );
+  }
+}
+
+class MyContents extends HookConsumerWidget {
+  const MyContents({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    double slidevalue = ref.watch(_mydataProvider).value;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          slidevalue.toStringAsFixed(2),
+          style: TextStyle(fontSize: 100),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: countProvider.incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+        Slider(
+          value: slidevalue,
+          onChanged: (value) =>
+              ref.read(_mydataProvider.notifier).changeState(value),
+        ),
+      ],
     );
   }
 }
